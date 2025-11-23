@@ -1,30 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "/home/user/visiondataextractor/VisionDataExtractor/VisionDataExtractor.csproj": {}
+    "C:\\School\\computer vision\\visiondataextractor\\visiondataextractor\\VisionDataExtractor\\VisionDataExtractor.csproj": {}
   },
   "projects": {
-    "/home/user/visiondataextractor/VisionDataExtractor/VisionDataExtractor.csproj": {
+    "C:\\School\\computer vision\\visiondataextractor\\visiondataextractor\\VisionDataExtractor\\VisionDataExtractor.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/user/visiondataextractor/VisionDataExtractor/VisionDataExtractor.csproj",
+        "projectUniqueName": "C:\\School\\computer vision\\visiondataextractor\\visiondataextractor\\VisionDataExtractor\\VisionDataExtractor.csproj",
         "projectName": "VisionDataExtractor",
-        "projectPath": "/home/user/visiondataextractor/VisionDataExtractor/VisionDataExtractor.csproj",
-        "packagesPath": "/home/user/.nuget/packages/",
-        "outputPath": "/home/user/visiondataextractor/VisionDataExtractor/obj/",
+        "projectPath": "C:\\School\\computer vision\\visiondataextractor\\visiondataextractor\\VisionDataExtractor\\VisionDataExtractor.csproj",
+        "packagesPath": "C:\\Users\\Adrian\\.nuget\\packages\\",
+        "outputPath": "C:\\School\\computer vision\\visiondataextractor\\visiondataextractor\\VisionDataExtractor\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/user/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Adrian\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "net9.0"
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {}
           }
         },
@@ -37,31 +37,32 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "Microsoft.AspNetCore.Components.WebAssembly": {
               "target": "Package",
-              "version": "[8.0.5, )"
+              "version": "[9.0.11, )"
             },
             "Microsoft.AspNetCore.Components.WebAssembly.DevServer": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.5, )"
+              "version": "[9.0.11, )"
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.5, )",
+              "version": "[9.0.11, )",
               "autoReferenced": true
             },
             "Microsoft.NET.Sdk.WebAssembly.Pack": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.5, )",
+              "version": "[9.0.11, )",
               "autoReferenced": true
             }
           },
@@ -79,7 +80,7 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.NETCore.App.Runtime.Mono.browser-wasm",
-              "version": "[8.0.5, 8.0.5]"
+              "version": "[9.0.11, 9.0.11]"
             }
           ],
           "frameworkReferences": {
@@ -87,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/nix/store/c67p00lksmyafxl5mhpx8zm67jwk95gr-dotnet-sdk-8.0.300/sdk/8.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

@@ -163,7 +163,7 @@
                         </div>
 
                         <div class="mt-6">
-                            <button @onclick="ExtractDataAsync" disabled="@isProcessing || dataFields.All(f => string.IsNullOrWhiteSpace(f.Name) || string.IsNullOrWhiteSpace(f.Prompt))" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button @onclick="ExtractDataAsync" disabled="@IsIncompleteOrProcessing" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" >
                                 @if (isProcessing)
                                 {
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -258,6 +258,22 @@
     };
     private Dictionary<string, string> extractedData = new Dictionary<string, string>();
     private bool isProcessing = false;
+
+    private bool IsIncompleteOrProcessing {
+        get{
+            if (isProcessing)
+            {
+                return true;
+            }
+
+            if (!dataFields.Any())
+            {
+                return true;
+            }
+            return dataFields.Any(f => string.IsNullOrWhiteSpace(f.Name) || string.IsNullOrWhiteSpace(f.Prompt));
+        }
+    }
+
     private string? errorMessage;
     private DotNetObjectReference<VisionExtractor>? dotNetRef;
     private bool showClearImageConfirm = false;
@@ -271,7 +287,11 @@
             var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", selectedModel);
             if (isCached)
             {
-                modelStatus = ModelStatus.Ready;
+                if(await JSRuntime.InvokeAsync<bool>("visionInterop.loadModel", selectedModel))
+                {
+                     modelStatus = ModelStatus.Ready;
+                }
+               
             }
         }
         catch (JSException ex)
@@ -304,7 +324,7 @@
 
         try
         {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(15)); // 15-minute timeout
+            using CancellationTokenSource? timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(15)); // 15-minute timeout
             var result = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", timeoutCts.Token, new object[] { selectedModel, dotNetRef });
 
             if (result.ValueKind == JsonValueKind.True)
@@ -363,7 +383,7 @@
             uploadedImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
             imageName = file.Name;
             extractedData.Clear();
-            errorMessage = null;
+            errorMessage = null; 
         }
         catch (Exception ex)
         {

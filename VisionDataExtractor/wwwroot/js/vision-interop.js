@@ -75,16 +75,44 @@ window.visionInterop = {
             console.log(`Extracting data with prompt: "${prompt}"`);
 
             // Import RawImage from @latest
-            const { RawImage } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@latest');
-            const image = await RawImage.fromURL(imageDataUrl);
+            const {RawImage} = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.0'); 
 
-            const fullPrompt = `<|user|>\n<image>\n${prompt}<|assistant|>\n`;
-            const inputs = await this.processor(fullPrompt, { images: image });
-            const output = await this.model.generate({ ...inputs, max_new_tokens: 256 });
-            const decodedOutput = this.processor.batch_decode(output, { skip_special_tokens: true });
+              const image = await RawImage.fromURL(imageDataUrl);
+
+
+            const messages = [
+                {
+                role: 'user',
+                content: [
+                    { type: 'image' },
+                    { type: 'text', text: prompt }
+                ]
+                }
+            ];
+
+            const text = this.processor.apply_chat_template(messages, {
+                add_generation_prompt: true,
+            });
+
+            console.log('Processing inputs...');
+            const inputs = await this.processor(text, [image], {
+                do_image_splitting: false,
+            });
             
-            const answer = decodedOutput[0].split('<|assistant|>')[1]?.trim();
+            console.log('Generating response...');
+            const generatedIds = await this.model.generate({
+                ...inputs,
+                max_new_tokens: 100,
+            });
 
+            console.log('Decoding output...');
+            const output = this.processor.batch_decode(
+                generatedIds.slice(null, [inputs.input_ids.dims.at(-1), null]),
+                { skip_special_tokens: true }
+            );
+
+            const answer = output[0].trim();           
+            
             console.log('Extraction result:', answer);
             return answer || 'No answer could be extracted.';
 
