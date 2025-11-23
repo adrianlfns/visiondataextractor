@@ -1,0 +1,65 @@
+{
+  "Files": [
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/bin/Debug/net8.0/wwwroot/_framework/blazor.webassembly.js",
+      "PackagePath": "staticwebassets/_framework/blazor.webassembly.js"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/obj/Debug/net8.0/compressed/k6fpuutffj.gz",
+      "PackagePath": "staticwebassets/_framework/blazor.webassembly.js.gz"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/obj/Debug/net8.0/scopedcss/bundle/VisionDataExtractor.styles.css",
+      "PackagePath": "staticwebassets/VisionDataExtractor.styles.css"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/css/app.css",
+      "PackagePath": "staticwebassets/css/app.css"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/css/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/css/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/icon-192.png",
+      "PackagePath": "staticwebassets/icon-192.png"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/index.html",
+      "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/js/vision-interop.js",
+      "PackagePath": "staticwebassets/js/vision-interop.js"
+    },
+    {
+      "Id": "/home/user/visiondataextractor/VisionDataExtractor/wwwroot/sample-data/weather.json",
+      "PackagePath": "staticwebassets/sample-data/weather.json"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.VisionDataExtractor.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.VisionDataExtractor.props",
+      "PackagePath": "build\\VisionDataExtractor.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.VisionDataExtractor.props",
+      "PackagePath": "buildMultiTargeting\\VisionDataExtractor.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.VisionDataExtractor.props",
+      "PackagePath": "buildTransitive\\VisionDataExtractor.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
