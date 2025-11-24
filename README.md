@@ -51,3 +51,14 @@ The first time you select a model, it will be downloaded and cached in your brow
     -   Try rephrasing your prompts to be more specific.
     -   Ensure the image is clear and the text is legible.
     -   For complex documents, the larger model may yield better results.
+
+
+## Publishing for Github Pages
+Publishing to 'doc' folders withch will be acutomaticalle be picked up on github pages.
+
+```
+.\publishToGitHubPagesDocFolder.ps1
+```
+
+## Demo URL
+https://adrianlfns.github.io/visiondataextractor/
