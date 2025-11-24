@@ -61,4 +61,4 @@ Publishing to 'doc' folders withch will be acutomaticalle be picked up on github
 ```
 
 ## Demo URL
-https://adrianlfns.github.io/visiondataextractor/
+https://visiondataextractor.netlify.app/
