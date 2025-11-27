@@ -128,6 +128,12 @@
         localErrorMessage = null;
         try
         {
+            if (dotNetRef == null)
+            {
+                localErrorMessage = "Component reference is not initialized.";
+                await SetModelStatus(ModelStatus.Error);
+                return;
+            }
             using CancellationTokenSource timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(15));
             var result = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", timeoutCts.Token, new object[] { selectedModel, dotNetRef });
 
