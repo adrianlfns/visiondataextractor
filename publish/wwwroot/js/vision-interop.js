@@ -31,10 +31,12 @@ window.visionInterop = {
                 progress_callback: (data) => this.handleProgress(data, dotNetRef)
             });
 
-            console.log(`Loading model: ${modelId}`);
+            console.log(`Loading model: ${modelId}`);                    
+
+
             this.model = await AutoModelForVision2Seq.from_pretrained(modelId, {
                 dtype: {
-                  embed_tokens: 'fp16',
+                  embed_tokens: 'fp32',
                   vision_encoder: 'q4',
                   decoder_model_merged: 'q4',
                 },
