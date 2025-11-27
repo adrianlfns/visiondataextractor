@@ -1,5 +1,6 @@
 @using VisionDataExtractor.Models
 @using System.Linq
+@inject IJSRuntime JSRuntime
 
 
 <div class="bg-white rounded-lg shadow-lg p-6 mb-6 transition-all duration-300">
@@ -16,8 +17,8 @@
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 relative group">
                 @if (Fields.Count > 1)
                 {
-                    <button @onclick="() => RequestRemoveDataField(field.Id)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-50 group-hover:opacity-100 transition-opacity" aria-label="Remove field">
-                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    <button @onclick="() => RequestRemoveDataField(field.Id)" title="Remove field" class="absolute top-2 right-2 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-full p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors" aria-label="Remove field">
+                        <i data-lucide="trash-2" class="w-6 h-6"></i>
                     </button>
                 }
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,5 +141,18 @@
     private async Task OnExtractDataClick()
     {
         await OnExtractData.InvokeAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Ensure Lucide icons are (re)created for dynamic content
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("lucide.createIcons");
+        }
+        catch
+        {
+            // Ignore if lucide is not available; page will still function
+        }
     }
 }
