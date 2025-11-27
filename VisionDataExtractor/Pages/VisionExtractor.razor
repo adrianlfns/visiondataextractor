@@ -32,68 +32,9 @@
                 <!-- Section 3: Configure Data Fields -->
                 @if (!string.IsNullOrEmpty(uploadedImage))
                 {
-                    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 transition-all duration-300">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-2xl font-semibold text-gray-700">3. Data Fields</h2>
-                            <button @onclick="AddDataField" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors flex items-center">
-                                 <i data-lucide="plus" class="w-5 h-5 mr-1"></i> Add Field
-                            </button>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            @foreach (var field in dataFields)
-                            {
-                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 relative group">
-                                    @if (dataFields.Count > 1)
-                                    {
-                                        <button @onclick="() => RequestRemoveDataField(field.Id)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-50 group-hover:opacity-100 transition-opacity" aria-label="Remove field">
-                                            <i data-lucide="x-circle" class="w-5 h-5"></i>
-                                        </button>
-                                    }
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Field Name</label>
-                                            <input type="text" placeholder="e.g., ProductName" value="@field.Name" @oninput="(e) => UpdateDataFieldName(field.Id, (string)e.Value)" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Extraction Prompt</label>
-                                            <textarea placeholder="e.g., What is the product name?" value="@field.Prompt" @oninput="(e) => UpdateDataFieldPrompt(field.Id, (string)e.Value)" rows="2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                                        </div>
-                                    </div>
-                                     @if (fieldToRemove == field.Id)
-                                    {
-                                        <div class="absolute inset-0 bg-white bg-opacity-95 flex flex-col items-center justify-center rounded-lg">
-                                            <p class="font-semibold mb-3">Remove this field?</p>
-                                            <div class="flex gap-4">
-                                                <button @onclick="() => ConfirmRemoveDataField(true)" class="bg-red-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-red-600">Yes</button>
-                                                <button @onclick="() => ConfirmRemoveDataField(false)" class="bg-gray-300 text-gray-800 font-bold py-1 px-4 rounded-lg hover:bg-gray-400">No</button>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-
-                        <div class="mt-6">
-                            <button @onclick="ExtractDataAsync" disabled="@IsIncompleteOrProcessing" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" >
-                                @if (isProcessing)
-                                {
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span>Extracting Data...</span>
-                                }
-                                else
-                                {
-                                    <i data-lucide="wand-sparks" class="w-5 h-5 mr-2"></i>
-                                    <span>Extract Data</span>
-                                }
-                            </button>
-                        </div>
-                    </div>
+                 <DataFields @bind-Fields="dataFields" IsProcessing="@isProcessing" OnExtractData="ExtractDataAsync" />
                 }
-
+                
                 <!-- Section 4: Results -->
                 @if (extractedData.Any())
                 {
@@ -159,23 +100,7 @@
     private Dictionary<string, string> extractedData = new Dictionary<string, string>();
     private bool isProcessing = false;
 
-    private bool IsIncompleteOrProcessing {
-        get{
-            if (isProcessing)
-            {
-                return true;
-            }
-
-            if (!dataFields.Any())
-            {
-                return true;
-            }
-            return dataFields.Any(f => string.IsNullOrWhiteSpace(f.Name) || string.IsNullOrWhiteSpace(f.Prompt));
-        }
-    }
-
     private string? errorMessage;
-    private Guid fieldToRemove = Guid.Empty;
 
  
 
@@ -190,42 +115,7 @@
   
 
 
-    private void AddDataField()
-    {
-        dataFields.Add(new DataField { Name = "", Prompt = "" });
-    }
-
-    private void RequestRemoveDataField(Guid id)
-    {
-        fieldToRemove = id;
-    }
-
-    private void ConfirmRemoveDataField(bool confirmed)
-    {
-        if (confirmed)
-        {
-            dataFields.RemoveAll(f => f.Id == fieldToRemove);
-        }
-        fieldToRemove = Guid.Empty;
-    }
-
-    private void UpdateDataFieldName(Guid id, string value)
-    {
-        var field = dataFields.FirstOrDefault(f => f.Id == id);
-        if (field != null)
-        {
-            field.Name = value;
-        }
-    }
-
-    private void UpdateDataFieldPrompt(Guid id, string value)
-    {
-        var field = dataFields.FirstOrDefault(f => f.Id == id);
-        if (field != null)
-        { 
-            field.Prompt = value;
-        }
-    }
+    // Data field management handled in the `DataFields` component (bound to `dataFields`).
 
     private async Task ExtractDataAsync()
     {
@@ -243,19 +133,20 @@
         {
             foreach (var field in validFields)
             {
+                var fieldName = field.Name ?? "Unknown";
                 var resultElement = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.extractData", uploadedImage, field.Prompt);
                 
                 if (resultElement.ValueKind == JsonValueKind.String)
                 {
-                    extractedData[field.Name] = resultElement.GetString();
+                    extractedData[fieldName] = resultElement.GetString() ?? "";
                 }
                 else if (resultElement.TryGetProperty("error", out var errorElement))
                 {
-                    extractedData[field.Name] = $"Error: {errorElement.GetString()}";
+                    extractedData[fieldName] = $"Error: {errorElement.GetString()}";
                 }
                 else
                 {
-                    extractedData[field.Name] = "Extraction failed with an unknown error.";
+                    extractedData[fieldName] = "Extraction failed with an unknown error.";
                 }
                 StateHasChanged();
             }
