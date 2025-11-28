@@ -92,34 +92,7 @@
     protected override async Task OnInitializedAsync()
     {
         dotNetRef = DotNetObjectReference.Create(this);
-        try
-        {
-            var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", selectedModel);
-            if (isCached)
-            {
-                var loaded = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", selectedModel);
-                // If JS returned true boolean, JsonElement.ValueKind == True
-                if (loaded.ValueKind == JsonValueKind.True)
-                {
-                    await SetModelStatus(ModelStatus.Ready);
-                }
-                else if (loaded.ValueKind == JsonValueKind.Object && loaded.TryGetProperty("error", out var err))
-                {
-                    localErrorMessage = err.GetString();
-                    await SetModelStatus(ModelStatus.Error);
-                }
-                else
-                {
-                    // unknown result
-                    await SetModelStatus(ModelStatus.NotLoaded);
-                }
-            }
-        }
-        catch (JSException ex)
-        {
-            localErrorMessage = $"Error initializing application: {ex.Message}";
-            await SetModelStatus(ModelStatus.Error);
-        }
+        await TryAutoLoadModel(selectedModel);
     }
 
     public async Task DownloadModelAsync()
@@ -177,33 +150,47 @@
         if (ModelStatus == ModelStatus.Downloading)
             return;
 
+        var loaded = await TryAutoLoadModel(selectedModel);
+        if (!loaded)
+        {
+            await SetModelStatus(ModelStatus.NotLoaded);
+        }
+    }
+
+    private async Task<bool> TryAutoLoadModel(string modelId)
+    {
         try
         {
-            // If the newly selected model is cached, try to load it automatically.
-            var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", selectedModel);
-            if (isCached)
+            var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", modelId);
+            if (!isCached)
+                return false;
+
+            var loaded = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", modelId);
+            if (loaded.ValueKind == JsonValueKind.True)
             {
-                var loaded = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", selectedModel);
-                if (loaded.ValueKind == JsonValueKind.True)
-                {
-                    await SetModelStatus(ModelStatus.Ready);
-                    return;
-                }
-                else if (loaded.ValueKind == JsonValueKind.Object && loaded.TryGetProperty("error", out var err))
-                {
-                    localErrorMessage = err.GetString();
-                    await SetModelStatus(ModelStatus.Error);
-                    return;
-                }
+                await SetModelStatus(ModelStatus.Ready);
+                return true;
+            }
+            else if (loaded.ValueKind == JsonValueKind.Object && loaded.TryGetProperty("error", out var err))
+            {
+                localErrorMessage = err.GetString();
+                await SetModelStatus(ModelStatus.Error);
+                return false;
             }
 
-            // Not cached or failed to auto-load -> mark as not loaded so user can download.
-            await SetModelStatus(ModelStatus.NotLoaded);
+            return false;
         }
         catch (JSException ex)
         {
-            localErrorMessage = $"Error checking model cache: {ex.Message}";
+            localErrorMessage = $"JavaScript error: {ex.Message}";
             await SetModelStatus(ModelStatus.Error);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            localErrorMessage = $"Error: {ex.Message}";
+            await SetModelStatus(ModelStatus.Error);
+            return false;
         }
     }
 
