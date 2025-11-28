@@ -2,7 +2,13 @@
 
 This project is a Blazor WebAssembly application that uses a client-side AI model (via Transformers.js) to extract structured data from images based on user-defined prompts. It provides a modern, responsive interface for uploading images, defining data fields, running the extraction, and exporting the results as JSON.
 
-## How to Run the App
+## How to Run the App locally 
+1. Open a powershell terminal.
+2. Navigate to the folder VisionDataExtractor. Inside that folder, you should be able to see a file named VisionDataExtractor.csproj.
+3. On the terminal type the command `dotnet watch`
+4. The browser should open automatically. If it does not, check the console. You should see something similar to "Now listening on: http://localhost:5269".
+
+## How to Run the App on Firebase studio
 
 1.  **Open the project in a compatible web-based IDE like Firebase Studio.**
 2.  The development environment will be automatically configured based on the `.idx/dev.nix` file.

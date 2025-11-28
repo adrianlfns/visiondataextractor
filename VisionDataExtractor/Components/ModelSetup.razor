@@ -10,9 +10,9 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <div class="md:col-span-2">
             <label for="model-select" class="block text-sm font-medium text-gray-700 mb-1">Select Model</label>
-            <select id="model-select" @bind="selectedModel"
+            <select id="model-select" value="@selectedModel" @onchange="OnSelectedModelChanged"
                     class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    disabled="@(ModelStatus != ModelStatus.NotLoaded)"
+                    disabled="@(ModelStatus == ModelStatus.Downloading)"
                     aria-label="Select AI Model">
                 @foreach (var model in availableModels)
                 {
@@ -160,6 +160,49 @@
         catch (OperationCanceledException)
         {
             localErrorMessage = "The model download timed out. Please check your network connection and try again.";
+            await SetModelStatus(ModelStatus.Error);
+        }
+    }
+
+    private async Task OnSelectedModelChanged(ChangeEventArgs e)
+    {
+        var newValue = e?.Value?.ToString();
+        if (string.IsNullOrEmpty(newValue) || newValue == selectedModel)
+            return;
+
+        selectedModel = newValue;
+        localErrorMessage = null;
+
+        // If a download is in progress, do nothing
+        if (ModelStatus == ModelStatus.Downloading)
+            return;
+
+        try
+        {
+            // If the newly selected model is cached, try to load it automatically.
+            var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", selectedModel);
+            if (isCached)
+            {
+                var loaded = await JSRuntime.InvokeAsync<JsonElement>("visionInterop.loadModel", selectedModel);
+                if (loaded.ValueKind == JsonValueKind.True)
+                {
+                    await SetModelStatus(ModelStatus.Ready);
+                    return;
+                }
+                else if (loaded.ValueKind == JsonValueKind.Object && loaded.TryGetProperty("error", out var err))
+                {
+                    localErrorMessage = err.GetString();
+                    await SetModelStatus(ModelStatus.Error);
+                    return;
+                }
+            }
+
+            // Not cached or failed to auto-load -> mark as not loaded so user can download.
+            await SetModelStatus(ModelStatus.NotLoaded);
+        }
+        catch (JSException ex)
+        {
+            localErrorMessage = $"Error checking model cache: {ex.Message}";
             await SetModelStatus(ModelStatus.Error);
         }
     }
