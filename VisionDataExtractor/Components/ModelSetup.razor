@@ -21,13 +21,13 @@
             </select>
         </div>
         <div class="w-full flex items-center justify-center md:justify-end h-full">
-            @if (ModelStatus == ModelStatus.NotLoaded)
+            @if (ModelStatus == ModelStatus.NotLoaded && !isAutoLoading)
             {
                 <button @onclick="DownloadModelAsync" class="w-full md:w-auto bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center">
                     <i data-lucide="download" class="w-5 h-5 mr-2"></i> Download Model
                 </button>
             }
-            else if (ModelStatus == ModelStatus.Downloading)
+            else if (ModelStatus == ModelStatus.Downloading || isAutoLoading)
             {
                 <div class="w-full text-center">
                     <div class="flex items-center justify-center text-sm text-gray-600">
@@ -35,12 +35,22 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Downloading...
+                        @if (isAutoLoading)
+                        {
+                            <span>Loading model...</span>
+                        }
+                        else
+                        {
+                            <span>Downloading...</span>
+                        }
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: @(downloadProgress)%"></div>
-                    </div>
-                    <p class="text-xs text-blue-600 font-semibold mt-1">@downloadProgress%</p>
+                    @if (!isAutoLoading)
+                    {
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: @(downloadProgress)%"></div>
+                        </div>
+                        <p class="text-xs text-blue-600 font-semibold mt-1">@downloadProgress%</p>
+                    }
                 </div>
             }
             else if (ModelStatus == ModelStatus.Ready)
@@ -88,6 +98,7 @@
     private int downloadProgress = 0;
     private DotNetObjectReference<ModelSetup>? dotNetRef;
     private string? localErrorMessage;
+    private bool isAutoLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,6 +170,8 @@
 
     private async Task<bool> TryAutoLoadModel(string modelId)
     {
+        isAutoLoading = true;
+        StateHasChanged();
         try
         {
             var isCached = await JSRuntime.InvokeAsync<bool>("visionInterop.isModelCached", modelId);
@@ -191,6 +204,11 @@
             localErrorMessage = $"Error: {ex.Message}";
             await SetModelStatus(ModelStatus.Error);
             return false;
+        }
+        finally
+        {
+            isAutoLoading = false;
+            StateHasChanged();
         }
     }
 
