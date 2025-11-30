@@ -105,6 +105,8 @@ window.visionInterop = {
             const generatedIds = await this.model.generate({
                 ...inputs,
                 max_new_tokens: 100,
+                temperature: 0.4,
+                top_p: 0.9
             });
 
             console.log('Decoding output...');
