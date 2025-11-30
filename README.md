@@ -1,3 +1,11 @@
+
+
+
+<p align="center">
+  <img src="logo.svg" alt="Vision Data Extractor" width="200">
+</p>
+
+
 # Vision Data Extractor
 
 This project is a Blazor WebAssembly application that uses a client-side AI model (via Transformers.js) to extract structured data from images based on user-defined prompts. It provides a modern, responsive interface for uploading images, defining data fields, running the extraction, and exporting the results as JSON.
