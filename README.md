@@ -6,14 +6,9 @@ This project is a Blazor WebAssembly application that uses a client-side AI mode
 1. Open a powershell terminal.
 2. Navigate to the folder VisionDataExtractor. Inside that folder, you should be able to see a file named VisionDataExtractor.csproj.
 3. On the terminal type the command `dotnet watch`
-4. The browser should open automatically. If it does not, check the console. You should see something similar to "Now listening on: http://localhost:5269".
+4. The browser should open automatically. If it does not, check the console. You should see something similar to "Now listening on: http://localhost:5269". Put that URL in your browser and you should be able to run the site locally.
 
-## How to Run the App on Firebase studio
 
-1.  **Open the project in a compatible web-based IDE like Firebase Studio.**
-2.  The development environment will be automatically configured based on the `.idx/dev.nix` file.
-3.  Once the environment is ready, the application should start automatically.
-4.  Open the web preview in a new browser tab to use the application.
 
 ## Key Features
 
@@ -59,11 +54,15 @@ The first time you select a model, it will be downloaded and cached in your brow
     -   For complex documents, the larger model may yield better results.
 
 
-## Publishing for Github Pages
-Publishing to 'doc' folders withch will be acutomaticalle be picked up on github pages.
+## Compiling/Publishing
+To host this site as a static page, you must first compile and then publish it.
+
+At the root of the repository, you should see a PowerShell script named publishSite.ps1. Execute this script as shown below.
+
+After the script completes, the publish folder will contain the compiled site. This publish folder is the exact directory that needs to be deployed to static hosting services like Netlify or GitHub Pages.
 
 ```
-.\publishToGitHubPagesDocFolder.ps1
+.\publishSite.ps1
 ```
 
 ## Demo URL
