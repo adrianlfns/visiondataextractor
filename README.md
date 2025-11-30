@@ -1,10 +1,6 @@
-
-
-
 <p align="center">
   <img src="logo.svg" alt="Vision Data Extractor" width="200">
 </p>
-
 
 # Vision Data Extractor
 
@@ -197,3 +193,10 @@ After the script completes, the publish folder will contain the compiled site. T
 
 ## Demo URL
 https://visiondataextractor.netlify.app/
+
+## Documentation resources
+
+* https://huggingface.co/docs/transformers.js/en/index
+* https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-10.0
+* https://huggingface.co/blog/smolvlm
+
