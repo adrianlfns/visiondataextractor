@@ -1,18 +1,56 @@
 @using VisionDataExtractor.Models
 @using System.Linq
+@using System.Text.Json
 @inject IJSRuntime JSRuntime
 
 
 <div class="bg-white rounded-lg shadow-lg p-6 mb-6 transition-all duration-300">
     <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
         <h2 class="text-2xl font-semibold text-gray-700">3. Data Fields</h2>
-        <button @onclick="AddDataField" class="bg-green-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2 text-sm whitespace-nowrap">
-                <i data-lucide="plus" class="w-5 h-5"></i>
-                <span class="hidden sm:inline">Add Field</span>
-                <span class="sm:hidden">Add</span>
-        </button>
+        <div class="flex gap-2 flex-wrap">
+            <button @onclick="AddDataField" class="bg-green-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-green-600 transition-colors inline-flex items-center gap-2 text-sm whitespace-nowrap">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    <span class="hidden sm:inline">Add Field</span>
+                    <span class="sm:hidden">Add</span>
+            </button>
+            
+            <button @onclick="ShowSaveTemplateModal" disabled="@IsIncompleteOrProcessing" class="bg-blue-500 text-white font-bold py-1.5 px-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="save" class="w-5 h-5"></i>
+                <span class="hidden sm:inline">Save Template</span>
+                <span class="sm:hidden">Save</span>
+            </button>
+        </div>
     </div>
     
+    <!-- Load Template Dropdown -->
+    @if (SavedTemplates.Count > 0)
+    {
+        <div class="mb-4">
+            <select @onchange="LoadTemplate" class="w-full sm:w-auto px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">-- Load Template --</option>
+                @foreach (JsonElement template in SavedTemplates)
+                {
+                    <option value="@template.ToString()">@template.GetProperty("TemplateName")</option>
+                }
+            </select>
+        </div>
+    }
+
+    <!-- Save Template Modal -->
+    @if (ShowSaveModal)
+    {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-4">
+                <h3 class="text-lg font-semibold mb-4">Save Field Template</h3>
+                <input type="text" placeholder="Enter template name" @bind="TemplateNameInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                <div class="flex gap-3 justify-end">
+                    <button @onclick="CancelSaveTemplate" class="bg-gray-300 text-gray-800 font-bold py-1 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button @onclick="ConfirmSaveTemplate" disabled="@(string.IsNullOrWhiteSpace(TemplateNameInput))" class="bg-blue-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="space-y-4">
         @foreach (var field in Fields)
         {
@@ -85,6 +123,10 @@
     public EventCallback OnExtractData { get; set; }
 
     private Guid FieldToRemove { get; set; } = Guid.Empty;
+    private bool ShowSaveModal { get; set; } = false;
+    private string TemplateNameInput { get; set; } = "";
+    private IJSObjectReference? _storageModule;
+    private List<System.Text.Json.JsonElement> SavedTemplates { get; set; } = new List<JsonElement>();
 
     private bool IsIncompleteOrProcessing
     {
@@ -100,6 +142,146 @@
                 return true;
             }
             return Fields.Any(f => string.IsNullOrWhiteSpace(f.Name) || string.IsNullOrWhiteSpace(f.Prompt));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _storageModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/fieldStorage.js");
+            await RefreshTemplateList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading storage module: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshTemplateList()
+    {
+        try
+        {
+            if (_storageModule != null)
+            {
+                SavedTemplates = await _storageModule.InvokeAsync<List<System.Text.Json.JsonElement>>("listTemplates");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing template list: {ex.Message}");
+        }
+    }
+
+    private void ShowSaveTemplateModal()
+    {
+        TemplateNameInput = "";
+        ShowSaveModal = true;
+    }
+
+    private void CancelSaveTemplate()
+    {
+        ShowSaveModal = false;
+        TemplateNameInput = "";
+    }
+
+    private async Task ConfirmSaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(TemplateNameInput) || _storageModule == null)
+            return;
+
+        try
+        {
+            // Prepare field data for storage (use lowercase keys 'name' and 'prompt')
+            var fieldsToSave = Fields.Select(f => new Dictionary<string, string>
+            {
+                ["name"] = f.Name ?? string.Empty,
+                ["prompt"] = f.Prompt ?? string.Empty
+            }).ToList();
+
+            // Save template as object { TemplateName, Fields }
+            await _storageModule.InvokeVoidAsync("saveTemplate", TemplateNameInput, fieldsToSave);
+            await RefreshTemplateList();
+            ShowSaveModal = false;
+            TemplateNameInput = "";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving template: {ex.Message}");
+        }
+    }
+
+    private async Task LoadTemplate(ChangeEventArgs e)
+    {
+        string? strValue = e?.Value?.ToString();
+        if (string.IsNullOrEmpty(strValue))
+            return;
+
+        try
+        {
+            using (JsonDocument document = System.Text.Json.JsonDocument.Parse(strValue))
+            {
+                JsonElement root =  document.RootElement;
+                if (root.TryGetProperty("Fields", out var fieldsArray) && fieldsArray.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                      Fields.Clear();
+                      foreach (var item in fieldsArray.EnumerateArray())
+                      {
+                            if (item.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            {
+                                // accept either lowercase or PascalCase keys
+                                string name = string.Empty, prompt = string.Empty;
+                                if (item.TryGetProperty("name", out var n1)) name = n1.GetString() ?? string.Empty;
+                                else if (item.TryGetProperty("Name", out var n2)) name = n2.GetString() ?? string.Empty;
+
+                                if (item.TryGetProperty("prompt", out var p1)) prompt = p1.GetString() ?? string.Empty;
+                                else if (item.TryGetProperty("Prompt", out var p2)) prompt = p2.GetString() ?? string.Empty;
+
+                                Fields.Add(new DataField { Name = name, Prompt = prompt });
+                            }
+                      }
+
+                      await FieldsChanged.InvokeAsync(Fields);
+                      StateHasChanged();
+                }
+            }          
+
+            // Fetch the full templates object and pick the named entry
+           /* var templatesElement = await _storageModule.InvokeAsync<System.Text.Json.JsonElement>("getTemplates");
+
+            if (templatesElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                templatesElement.TryGetProperty(templateName, out var templateObj) &&
+                templateObj.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                // The stored shape is { TemplateName: "name", Fields: [ ... ] }
+                if (templateObj.TryGetProperty("Fields", out var fieldsArray) && fieldsArray.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    Fields.Clear();
+
+                    foreach (var item in fieldsArray.EnumerateArray())
+                    {
+                        if (item.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            // accept either lowercase or PascalCase keys
+                            string name = string.Empty, prompt = string.Empty;
+                            if (item.TryGetProperty("name", out var n1)) name = n1.GetString() ?? string.Empty;
+                            else if (item.TryGetProperty("Name", out var n2)) name = n2.GetString() ?? string.Empty;
+
+                            if (item.TryGetProperty("prompt", out var p1)) prompt = p1.GetString() ?? string.Empty;
+                            else if (item.TryGetProperty("Prompt", out var p2)) prompt = p2.GetString() ?? string.Empty;
+
+                            Fields.Add(new DataField { Name = name, Prompt = prompt });
+                        }
+                    }
+
+                    await FieldsChanged.InvokeAsync(Fields);
+                    StateHasChanged();
+                }
+            }*/
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading template: {ex.Message}");
         }
     }
 
