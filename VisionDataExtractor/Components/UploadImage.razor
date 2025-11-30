@@ -13,15 +13,17 @@
         @if (!_showCameraPreview)
         {
             <!-- Initial state: two buttons side-by-side -->
-            <div class="flex justify-center gap-4">
-                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+            <div class="flex flex-wrap justify-center gap-3">
+                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-1.5 px-3 text-sm font-medium hover:bg-blue-600 shadow-sm whitespace-nowrap">
                     <i data-lucide="upload" class="w-5 h-5"></i>
-                    Upload Image
+                    <span class="hidden sm:inline">Upload Image</span>
+                    <span class="sm:hidden">Upload</span>
                 </label>
 
-                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-1.5 px-3 text-sm font-medium hover:bg-blue-600 shadow-sm whitespace-nowrap">
                     <i data-lucide="camera" class="w-5 h-5"></i>
-                    Capture from Camera
+                    <span class="hidden sm:inline">Capture from Camera</span>
+                    <span class="sm:hidden">Capture</span>
                 </button>
             </div>
         }
@@ -50,20 +52,22 @@
                 <img src="@UploadedImage" alt="@ImageName" class="max-h-96 w-auto rounded-lg shadow-md" />
             </div>
 
-            <div class="mt-4 flex gap-3">
-                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+            <div class="mt-4 flex flex-wrap justify-center gap-3">
+                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-1.5 px-3 text-sm font-medium hover:bg-blue-600 shadow-sm whitespace-nowrap">
                     <i data-lucide="upload" class="w-5 h-5"></i>
-                    Upload Image
+                    <span class="hidden sm:inline">Upload Image</span>
+                    <span class="sm:hidden">Upload</span>
                 </label>
 
-                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-1.5 px-3 text-sm font-medium hover:bg-blue-600 shadow-sm whitespace-nowrap">
                     <i data-lucide="camera" class="w-5 h-5"></i>
-                    Capture from Camera
+                    <span class="hidden sm:inline">Capture from Camera</span>
+                    <span class="sm:hidden">Capture</span>
                 </button>
 
-                <button @onclick="ClearImage" class="inline-flex items-center gap-2 bg-red-500 text-white rounded-md py-2 px-3 text-sm font-medium hover:bg-red-600 shadow-sm">
+                <button @onclick="ClearImage" class="inline-flex items-center gap-2 bg-red-500 text-white rounded-md py-1.5 px-3 text-sm font-medium hover:bg-red-600 shadow-sm whitespace-nowrap">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    Remove
+                    <span>Remove</span>
                 </button>
             </div>
 
@@ -173,21 +177,23 @@
             // Set flag FIRST so the container gets rendered
             _showCameraPreview = true;
             StateHasChanged();
-            
+
             // Wait for the render to complete
             await Task.Delay(100);
-            
+
             // THEN ensure module is loaded and start camera
             _cameraModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/cameraCapture.js");
-            
+
             // Start camera
             await _cameraModule.InvokeAsync<bool>("startCamera", _cameraContainerId);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Camera error: {ex.Message}");
-            // Camera not available or permission denied
+            Console.WriteLine($"Start camera error: {ex.Message}");
             _showCameraPreview = false;
+        }
+        finally
+        {
             StateHasChanged();
         }
     }
