@@ -1,49 +1,81 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using VisionDataExtractor.Models
+@inject IJSRuntime JSRuntime
 
 <div class="bg-white rounded-lg shadow-lg p-6 mb-6 transition-all duration-300">
     <h2 class="text-2xl font-semibold text-gray-700 mb-4">2. Upload Image</h2>
-    <!-- Hidden input always present so we can replace image anytime -->
-    <InputFile id="@inputId" OnChange="HandleImageUpload" accept="image/*" class="sr-only" aria-label="Upload image" />
 
-    @if (string.IsNullOrEmpty(UploadedImage))
+    <!-- Hidden file input always present so we can replace image via upload -->
+    <InputFile id="@fileInputId" OnChange="HandleImageUpload" accept="image/*" class="sr-only" aria-label="Upload image" />
+
+    @if (string.IsNullOrEmpty(UploadedImage) || _showCameraPreview)
     {
-        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-            <div class="space-y-1 text-center">
-                    <i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
-                <div class="flex text-sm text-gray-600">
-                    <label for="@inputId" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                        <span>Click to upload image</span>
-                    </label>
-                </div>
-                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+        @if (!_showCameraPreview)
+        {
+            <!-- Initial state: two buttons side-by-side -->
+            <div class="flex justify-center gap-4">
+                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    Upload Image
+                </label>
+
+                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                    Capture from Camera
+                </button>
             </div>
-        </div>
+        }
+        else
+        {
+            <!-- Camera preview active -->
+            <div class="space-y-4">
+                <div id="@_cameraContainerId" class="w-full bg-black rounded-lg"></div>
+
+                <div class="flex justify-center gap-3">
+                    <button @onclick="CapturePhotoFromCamera" class="bg-green-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors flex items-center">
+                        <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Capture
+                    </button>
+                    <button @onclick="StopCameraPreview" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        }
     }
     else
     {
-        <div class="relative group">
-            <label for="@inputId" class="cursor-pointer block">
-                <img src="@UploadedImage" alt="@ImageName" class="max-h-96 w-auto mx-auto rounded-lg shadow-md" />
-            </label>
+        <!-- Image displayed with buttons underneath -->
+        <div class="w-full flex flex-col items-center">
+            <div class="w-full flex justify-center">
+                <img src="@UploadedImage" alt="@ImageName" class="max-h-96 w-auto rounded-lg shadow-md" />
+            </div>
 
-            <div class="absolute top-2 right-2 flex items-center gap-2">
-                <label for="@inputId" title="Replace image" class="bg-white border border-gray-200 rounded-full p-2 shadow-sm text-gray-700 hover:bg-gray-50 cursor-pointer" aria-label="Replace image">
-                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+            <div class="mt-4 flex gap-3">
+                <label for="@fileInputId" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    Upload Image
                 </label>
 
-                <button @onclick="ClearImage" disabled="@showClearImageConfirm" class="bg-black bg-opacity-50 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50" aria-label="Remove image">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button @onclick="StartCameraPreview" class="inline-flex items-center gap-2 bg-blue-500 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-600 shadow-sm">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                    Capture from Camera
+                </button>
+
+                <button @onclick="ClearImage" class="inline-flex items-center gap-2 bg-red-500 text-white rounded-md py-2 px-3 text-sm font-medium hover:bg-red-600 shadow-sm">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    Remove
                 </button>
             </div>
 
             @if (showClearImageConfirm)
             {
-                <div class="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center rounded-lg">
-                    <p class="font-semibold mb-3">Are you sure?</p>
-                    <div class="flex gap-4">
-                        <button @onclick="() => ConfirmClearImage(true)" class="bg-red-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-red-600">Yes</button>
-                        <button @onclick="() => ConfirmClearImage(false)" class="bg-gray-300 text-gray-800 font-bold py-1 px-4 rounded-lg hover:bg-gray-400">No</button>
+                <div class="mt-3 w-full flex justify-center">
+                    <div class="bg-white p-4 rounded-md shadow-md">
+                        <p class="font-semibold mb-2">Are you sure?</p>
+                        <div class="flex gap-4">
+                            <button @onclick="() => ConfirmClearImage(true)" class="bg-red-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-red-600">Yes</button>
+                            <button @onclick="() => ConfirmClearImage(false)" class="bg-gray-300 text-gray-800 font-bold py-1 px-4 rounded-lg hover:bg-gray-400">No</button>
+                        </div>
                     </div>
                 </div>
             }
@@ -54,7 +86,10 @@
 
 @code {
 
-    private readonly string inputId = "file-upload-" + System.Guid.NewGuid().ToString("N");
+    private readonly string fileInputId = "file-upload-" + System.Guid.NewGuid().ToString("N");
+    private readonly string _cameraContainerId = "camera-container-" + System.Guid.NewGuid().ToString("N");
+    private IJSObjectReference? _cameraModule;
+    private bool _showCameraPreview = false;
 
     [Parameter]
     public string? UploadedImage { get; set; }
@@ -69,6 +104,30 @@
     public EventCallback<string?> ImageNameChanged { get; set; }
 
     private bool showClearImageConfirm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _cameraModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/cameraCapture.js");
+        }
+        catch
+        {
+            // Module will be loaded on-demand if import fails here
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("lucide.createIcons");
+        }
+        catch
+        {
+            // Icon library may not be loaded yet
+        }
+    }
 
     private async Task HandleImageUpload(InputFileChangeEventArgs e)
     {
@@ -107,6 +166,88 @@
         }
     }
 
+    private async Task StartCameraPreview()
+    {
+        try
+        {
+            // Set flag FIRST so the container gets rendered
+            _showCameraPreview = true;
+            StateHasChanged();
+            
+            // Wait for the render to complete
+            await Task.Delay(100);
+            
+            // THEN ensure module is loaded and start camera
+            _cameraModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/cameraCapture.js");
+            
+            // Start camera
+            await _cameraModule.InvokeAsync<bool>("startCamera", _cameraContainerId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Camera error: {ex.Message}");
+            // Camera not available or permission denied
+            _showCameraPreview = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StopCameraPreview()
+    {
+        try
+        {
+            if (_cameraModule != null)
+            {
+                await _cameraModule.InvokeVoidAsync("stopCamera");
+            }
+        }
+        catch { }
+        finally
+        {
+            _showCameraPreview = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CapturePhotoFromCamera()
+    {
+        try
+        {
+            if (_cameraModule == null) return;
+
+            // Capture photo as data URL
+            var dataUrl = await _cameraModule.InvokeAsync<string>("capturePhoto");
+            
+            if (!string.IsNullOrEmpty(dataUrl))
+            {
+                UploadedImage = dataUrl;
+                ImageName = "camera-" + System.DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".jpg";
+                await UploadedImageChanged.InvokeAsync(UploadedImage);
+                await ImageNameChanged.InvokeAsync(ImageName);
+                
+                // Stop camera and go back to image view
+                try
+                {
+                    if (_cameraModule != null)
+                    {
+                        await _cameraModule.InvokeVoidAsync("stopCamera");
+                    }
+                }
+                catch { }
+                
+                _showCameraPreview = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Capture error: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
     private void ClearImage()
     {
         showClearImageConfirm = true;
@@ -123,4 +264,6 @@
         }
         showClearImageConfirm = false;
     }
+
 }
+
