@@ -39,6 +39,128 @@ The app uses pre-trained, quantized Document Question Answering models from the 
 
 The first time you select a model, it will be downloaded and cached in your browser's IndexedDB. Subsequent visits will load the model from the cache for a much faster startup time.
 
+## Important code snippets
+
+#### Loading the model based in the model key. Located in the vision-interop.js file.
+```js vision-interop.js
+
+    async loadModel(modelId, dotNetRef) {
+        try {
+            // 1. Check for WebGPU support
+            if (!navigator.gpu) {
+                const message = 'WebGPU is not supported in your browser. Please use a modern browser like Chrome or Edge (version 113+).';
+                console.error(message);
+                return { error: message };
+            }
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                 const message = 'WebGPU supported, but no compatible adapter found.';
+                 console.error(message);
+                 return { error: message };
+            }
+            console.log('WebGPU is supported and adapter is available.');
+
+            // 2. Import necessary components from Transformers.js (using @latest)
+            const { AutoProcessor, AutoModelForVision2Seq, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.0');
+
+            // 3. Configure environment
+            env.allowLocalModels = false;
+
+            // 4. Load processor and model
+            console.log(`Loading processor for: ${modelId}`);
+            this.processor = await AutoProcessor.from_pretrained(modelId, {
+                progress_callback: (data) => this.handleProgress(data, dotNetRef)
+            });
+
+            console.log(`Loading model: ${modelId}`);                    
+
+
+            this.model = await AutoModelForVision2Seq.from_pretrained(modelId, {
+                dtype: {
+                  embed_tokens: 'fp32',
+                  vision_encoder: 'q4',
+                  decoder_model_merged: 'q4',
+                },
+                device: 'webgpu',
+                progress_callback: (data) => this.handleProgress(data, dotNetRef)
+            });
+            
+            // 5. Finalize and report success
+            if (dotNetRef) {
+                dotNetRef.invokeMethodAsync('UpdateProgress', 100);
+            }
+            localStorage.setItem(`model_cached_${modelId}`, 'true');
+            console.log('Model and processor loaded successfully with WebGPU.');
+            return true;
+
+        } catch (error) {
+            console.error('Error loading model:', error);
+            return { error: `Failed to load model: ${error.message}` };
+        }
+    }
+
+```
+
+#### Prompting the model with image as the context. Located in the vision-interop.js file.
+```js vision-interop.js
+  async extractData(imageDataUrl, prompt) {
+        try {
+            if (!this.model || !this.processor) {
+                throw new Error('The model and processor are not loaded. Please call loadModel first.');
+            }
+            console.log(`Extracting data with prompt: "${prompt}"`);
+
+            // Import RawImage from @latest
+            const {RawImage} = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.0'); 
+
+              const image = await RawImage.fromURL(imageDataUrl);
+
+
+            const messages = [
+                {
+                role: 'user',
+                content: [
+                    { type: 'image' },
+                    { type: 'text', text: prompt }
+                ]
+                }
+            ];
+
+            const text = this.processor.apply_chat_template(messages, {
+                add_generation_prompt: true,
+            });
+
+            console.log('Processing inputs...');
+            const inputs = await this.processor(text, [image], {
+                do_image_splitting: false,
+            });
+            
+            console.log('Generating response...');
+            const generatedIds = await this.model.generate({
+                ...inputs,
+                max_new_tokens: 100,
+            });
+
+            console.log('Decoding output...');
+            const output = this.processor.batch_decode(
+                generatedIds.slice(null, [inputs.input_ids.dims.at(-1), null]),
+                { skip_special_tokens: true }
+            );
+
+            const answer = output[0].trim();           
+            
+            console.log('Extraction result:', answer);
+            return answer || 'No answer could be extracted.';
+
+        } catch (error) {
+            console.error('Error extracting data:', error);
+            return { error: `Failed to extract data: ${error.message}` };
+        }
+    }
+```
+
+
+
 ## Troubleshooting
 
 -   **Model Download Fails:**
